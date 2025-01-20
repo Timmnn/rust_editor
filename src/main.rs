@@ -29,26 +29,38 @@ fn main() {
                 clear_screen();
                 //println!("Key pressed: {:?}", key_event);
 
-                let key = match key_event.code {
-                    KeyCode::Char(c) => c.to_string(), // Convert character keys
-                    //KeyCode::Enter => "Enter".to_string(),
-                    //KeyCode::Backspace => "Backspace".to_string(),
+                match key_event.code {
+                    KeyCode::Char(c) => buffer = buffer + c.to_string().as_str(),
+                    KeyCode::Enter => buffer = buffer + "\n\r",
+                    KeyCode::Backspace => {
+                        buffer.pop();
+                    }
                     //KeyCode::Esc => "Escape".to_string(),
                     //KeyCode::Left => "Left Arrow".to_string(),
                     //KeyCode::Right => "Right Arrow".to_string(),
                     //KeyCode::Up => "Up Arrow".to_string(),
                     //KeyCode::Down => "Down Arrow".to_string(),
                     //_ => format!("{:?}", key_event.code), // Fallback for other keys
-                    _ => "".to_string(),
+                    _ => {}
                 };
 
-                buffer = buffer + key.as_str();
+                let cursor_pos: (u16, u16) = (3, 5);
 
+                buffer = replace_char_at_position(
+                    buffer.as_str(),
+                    '█',
+                    cursor_pos.0 as usize,
+                    cursor_pos.1 as usize,
+                );
                 println!("{}", buffer);
 
                 if key_event.code == KeyCode::Char('q') {
                     break;
                 }
+
+                stdout
+                    .execute(cursor::MoveTo(cursor_pos.0, cursor_pos.1))
+                    .unwrap();
             }
         }
     }
@@ -58,4 +70,18 @@ fn main() {
 
 fn clear_screen() {
     print!("\x1B[2J\x1B[1;1H");
+}
+
+fn replace_char_at_position(input: &str, replacement: char, row: usize, column: usize) -> String {
+    let mut chars: Vec<char> = input.chars().collect();
+
+    // Calculate the index from the row and column (assuming the string is in a grid-like format)
+    let index = row * column + column;
+
+    // Check if the index is within bounds of the string length
+    if index < chars.len() {
+        chars[index] = replacement;
+    }
+
+    chars.into_iter().collect()
 }
